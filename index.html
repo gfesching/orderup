@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-Hant">
- <head><script>window["__codeletBootstrap__"]=JSON.parse('{"A":"A","B":"20260716-05-1ab63ad"}');</script><script src="/_sdk/f432b76fb310b513.telemetry_sdk.js" integrity="sha512-9FJQ55EKmmqhyyik8BhrMVfm0+iYYfb8uOlRsjtkxJMEI97qOVEI4PnHohDjQAtvAep0IOEpdQ64eki0sz62ug=="></script>
+ <head><script>window["__codeletBootstrap__"]=JSON.parse('{"A":"A","B":"20260717-05-8209e4e"}');</script><script src="/_sdk/f432b76fb310b513.telemetry_sdk.js" integrity="sha512-9FJQ55EKmmqhyyik8BhrMVfm0+iYYfb8uOlRsjtkxJMEI97qOVEI4PnHohDjQAtvAep0IOEpdQ64eki0sz62ug=="></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recorder Rhythm Builder</title>
@@ -133,7 +133,7 @@
     /* 高音譜記號與拍號定位調整 */
     .clef {
       position: absolute;
-      top: 31px; /* 往下移 0.5 行 (約 7px，原為 24px) */
+      top: 26px; /* 往下移 0.5 行 (約 7px，原為 24px) */
       left: 14px;
       z-index: 2;
       color: var(--staff);
@@ -141,6 +141,18 @@
       font-size: 6.8rem;
       line-height: 1;
       transform: scaleX(.7);
+    }
+
+    /* 單小節線 */
+    .measure-barline {
+      position: absolute;
+      top: 54px;
+      right: 4px;
+      height: 56px;
+      width: 2px;
+      background: rgba(63, 52, 44, .78);
+      pointer-events: none;
+      z-index: 3;
     }
 
     /* 終止雙線 */
@@ -159,7 +171,7 @@
     /* 4/4 拍號定位調整 */
     .signature {
       position: absolute;
-      top: 61px; /* 往下移 0.5 行 (原為 55px) */
+      top: 61px; /* 往下移一點點對齊樂譜 (原為 54px) */
       left: 76px;
       z-index: 2;
       display: flex;
@@ -202,6 +214,7 @@
       cursor: pointer;
       transition: transform .16s ease, background .16s ease, outline .16s ease;
       touch-action: none;
+      margin-top: 14px;
     }
 
     .drop-zone:hover,
@@ -339,30 +352,60 @@
 
     /* 
       音符位置與音高映射：
-      由下而上：
-      0: Do (下加一線) - top: 110.5px (需加一條短下加線)
-      1: Re (下加一間) - top: 96.5px
+      由下而上（以 7px 為半行）：
+      0: Do (下加一線) - top: 96.5px (與固定示範拍 3/4 的 Do 一致)
+      1: Re (下加一間) - top: 89.5px
       2: Mi (第一線) - top: 82.5px
-      3: Fa (第一間) - top: 68.5px
-      4: Sol (第二線) - top: 54.5px
-      5: La (第二間) - top: 40.5px
-      6: Si (第三線) - top: 26.5px -> 超過第三線（>=6）符桿朝下
-      7: Do2 (第三間) - top: 12.5px
-      8: Re2 (第四線) - top: -1.5px
-      9: Mi2 (第四間) - top: -15.5px
-      10: Fa2 (第五線) - top: -29.5px
+      3: Fa (第一間) - top: 75.5px
+      4: Sol (第二線) - top: 68.5px
+      5: La (第二間) - top: 61.5px
+      6: Si (第三線) - top: 54.5px -> 超過或等於第三線（>=6）符桿朝下
+      7: Do2 (第三間) - top: 47.5px
+      8: Re2 (第四線) - top: 40.5px
+      9: Mi2 (第四間) - top: 33.5px
+      10: Fa2 (第五線) - top: 26.5px
+      11: Sol2 (上加一間) - top: 19.5px
+      12: La2 (上加一線) - top: 12.5px
     */
     .staff-note .note-head {
+      position: absolute;
       left: 24px;
-      top: var(--head-top);
+      top: var(--head-top, 0px);
+      width: 20px;
+      height: 13px;
+      border-radius: 50%;
+      background: currentColor;
+      transform: rotate(-24deg);
+      cursor: ns-resize;
+      touch-action: none;
     }
 
-    /* 下加一線 (Do) 輔助線 */
+    .staff-note .note-head.note-head-two {
+      left: 56px;
+      top: var(--head-top-two, 0px);
+    }
+
+    /* 八分音符個別下加線與上加線 */
+    .ledger-one, .ledger-two {
+      position: absolute;
+      height: 2px;
+      background: rgba(63, 52, 44, 0.78);
+      display: none;
+      pointer-events: none;
+    }
+    .ledger-one {
+      left: 12px;
+    }
+    .ledger-two {
+      left: 48px;
+    }
+
+    /* 下加一線 (Do) 輔助線：加在音符正中間，高度在 103px */
     .staff-note::before {
       content: "";
       position: absolute;
       left: 16px;
-      top: 116px;
+      top: 103px;
       width: 36px;
       height: 2px;
       background: rgba(63, 52, 44, 0.78);
@@ -373,16 +416,32 @@
       display: block;
     }
 
+    /* 上加一線 (La2) 輔助線：加在音符正中間，高度在 19px */
+    .staff-note::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      top: 19px;
+      width: 36px;
+      height: 2px;
+      background: rgba(63, 52, 44, 0.78);
+      display: none;
+      pointer-events: none;
+    }
+    .staff-note.show-upper-ledger::after {
+      display: block;
+    }
+
     /* 特定音符輔助線 */
     .staff-note.show-custom-ledger::before {
       display: block;
-      top: var(--ledger-top, 110px);
+      top: var(--ledger-top, 103px);
     }
 
     .staff-note .note-stem {
       position: absolute;
-      left: 42px;
-      top: calc(var(--head-top) - 37px);
+      left: 41px;
+      top: calc(var(--head-top, 0px) - 37px);
       width: 3.5px;
       height: 42px;
       border-radius: 2px;
@@ -390,18 +449,28 @@
       transform-origin: bottom center;
     }
 
-    .staff-note.stem-down .note-stem {
-      left: 25px;
-      top: calc(var(--head-top) + 8px);
-      transform-origin: top center;
+    .staff-note .note-stem.note-stem-two {
+      left: 73px;
+      top: calc(var(--head-top-two, 0px) - 37px);
     }
 
-    .staff-note.stem-down .note-head {
+    /* 符桿朝下樣式：符頭反向，符桿移至左側向下 */
+    .staff-note .note-head.stem-down-head {
       transform: rotate(-24deg) scaleX(-1);
     }
 
+    .staff-note .note-stem.stem-down {
+      left: 24.5px;
+      top: calc(var(--head-top, 0px) + 8px);
+      transform-origin: top center;
+    }
+    .staff-note .note-stem.note-stem-two.stem-down {
+      left: 56.5px;
+      top: calc(var(--head-top-two, 0px) + 8px);
+    }
+
     .staff-note.eighth-pair {
-      width: 84px;
+      width: 100px;
     }
 
     .staff-note.eighth-pair .note-head {
@@ -409,35 +478,36 @@
     }
 
     .staff-note.eighth-pair .note-head.note-head-two {
-      left: 50px;
+      left: 54px;
     }
 
+    /* 符桿朝上：符桿必須在符頭的右側 (音頭 left 18 -> 符桿 left 35; 音頭 left 54 -> 符桿 left 71) */
     .staff-note.eighth-pair .note-stem {
-      left: 36px;
+      left: 35px;
     }
 
     .staff-note.eighth-pair .note-stem.note-stem-two {
-      left: 68px;
+      left: 71px;
     }
 
-    .staff-note.eighth-pair.stem-down .note-stem {
-      left: 19px;
+    /* 符桿朝下：符桿必須在符頭的左側 (音頭 left 18 -> 符桿 left 18.5; 音頭 left 54 -> 符桿 left 54.5) */
+    .staff-note.eighth-pair .note-stem.stem-down {
+      left: 18.5px;
+    }
+    .staff-note.eighth-pair .note-stem.note-stem-two.stem-down {
+      left: 54.5px;
     }
 
-    .staff-note.eighth-pair.stem-down .note-stem.note-stem-two {
-      left: 51px;
-    }
-
-    .staff-note.eighth-pair .note-beam {
+    /* 八分音符連接橫桿：使用SVG動態繪製，解決不對齊問題 */
+    .staff-note .beam-svg {
       position: absolute;
-      left: 36px;
-      top: calc(var(--head-top) - 37px);
-      width: 34px;
-      height: 6px;
-      border-radius: 1px;
-      background: currentColor;
-      transform-origin: left top;
-      transform: skewY(var(--beam-skew, 0deg));
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      color: currentColor;
+      overflow: visible;
     }
 
     .rest-mark {
@@ -491,8 +561,8 @@
       background: #fdf5d6;
       border: 2px solid #e1aa33;
       border-radius: 20px;
-      padding: 8px 24px;
-      font-size: 0.85rem;
+      padding: 6px 12px;
+      font-size: 1.05rem;
       font-weight: 800;
       color: #4a341a;
       cursor: grab;
@@ -500,7 +570,7 @@
       transition: transform 0.15s ease, box-shadow 0.15s ease;
       user-select: none;
       touch-action: none;
-      width: calc(50% - 10px); /* 兩列均勻排列 */
+      width: calc(50% - 8px); /* 兩列均勻排列 */
     }
 
     .ingredient-badge:active {
@@ -509,15 +579,15 @@
     }
 
     .word-drop-slot {
-      min-width: 90px;
-      min-height: 38px;
+      min-width: 140px;
+      min-height: 44px;
       border: 2px dashed #bba181;
       border-radius: 12px;
       background: rgba(255, 255, 255, 0.4);
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 2px 8px;
+      padding: 2px 12px;
       transition: background 0.15s ease, border-color 0.15s ease;
     }
 
@@ -529,6 +599,7 @@
       font-weight: bold;
       color: #4a341a;
       outline: none;
+      font-size: 1.05rem;
     }
 
     .word-drop-slot.drag-over {
@@ -552,7 +623,7 @@
       }
 
       .clef { left: 9px; top: 12px; font-size: 5.4rem; }
-      .signature { left: 55px; top: 38px; font-size: 1.8rem; }
+      .signature { left: 55px; top: 43px; font-size: 1.8rem; }
       .rhythm-card { min-height: 102px; }
       .staff-note { transform: scale(.9); }
     }
@@ -565,9 +636,6 @@
    <main class="worksheet px-5 py-7 sm:px-9 sm:py-10">
     <header class="relative z-10 max-w-3xl">
      <h1 data-template-id="page-title" class="canva-text font-extrabold leading-tight"></h1>
-<h1 class="text-3xl font-extrabold text-center -mt-8 mb-2">
-  🪈 Let's play the recorder. Order up!
-</h1>
      <p data-template-id="page-subtitle" class="canva-text mt-3 max-w-2xl leading-relaxed"></p>
     </header>
     <section class="relative z-10 mt-8 grid gap-7 lg:grid-cols-[minmax(0,1fr)_250px]" aria-label="節奏與音高活動">
@@ -577,6 +645,7 @@
         <div class="staff-frame w-full">
          <div class="staff-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span>
          </div><span class="clef" aria-hidden="true">𝄞</span> <span class="signature" aria-hidden="true"><span>4</span><span>4</span></span>
+         <div class="measure-barline" aria-hidden="true"></div>
          <div class="staff-notes">
           <div class="fixed-beat">
            <div class="staff-note static-note" style="--head-top: 82.5px;" aria-hidden="true">
@@ -591,13 +660,9 @@
          </div>
         </div>
         <div class="w-full flex justify-between px-2 mt-2" style="padding-left: 115px;">
-         <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">What</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">size?</span>
-         <div class="flex justify-center" style="width: 25%;">
-          <div class="word-drop-slot" data-word-beat="3"><input type="text" placeholder="" aria-label="What size? Beat 3 pizza topping">
-          </div>
-         </div>
-         <div class="flex justify-center" style="width: 25%;">
-          <div class="word-drop-slot" data-word-beat="4"><input type="text" placeholder="" aria-label="What size? Beat 4 pizza topping">
+         <span class="text-base sm:text-lg font-bold text-[#4a341a]" style="width: 25%; text-align: center;">What</span> <span class="text-base sm:text-lg font-bold text-[#4a341a]" style="width: 25%; text-align: center;">size?</span>
+         <div class="flex justify-center" style="width: 50%;">
+          <div class="word-drop-slot w-full max-w-[240px]" data-word-beat="3-4"><input type="text" placeholder="" aria-label="What size? Beat 3-4 pizza topping">
           </div>
          </div>
         </div>
@@ -606,6 +671,7 @@
         <div class="staff-frame w-full">
          <div class="staff-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span>
          </div><span class="clef" aria-hidden="true">𝄞</span>
+         <div class="measure-barline" aria-hidden="true"></div>
          <div class="staff-notes">
           <div class="fixed-beat">
            <div class="staff-note static-note" style="--head-top: 82.5px;" aria-hidden="true">
@@ -613,20 +679,17 @@
            </div>
           </div>
           <div class="fixed-beat">
-           <div class="staff-note static-note eighth-pair" style="--head-top: 68.5px;" aria-hidden="true">
-            <span class="note-head"></span><span class="note-head note-head-two"></span> <span class="note-stem"></span><span class="note-stem note-stem-two"></span><span class="note-beam"></span>
+           <div class="staff-note static-note eighth-pair" style="--head-top: 68.5px; --head-top-two: 68.5px;" aria-hidden="true"><span class="note-head note-head-one" style="top: 68.5px;"></span> <span class="note-head note-head-two" style="top: 68.5px;"></span> <span class="note-stem note-stem-one" style="top: calc(68.5px - 37px);"></span> <span class="note-stem note-stem-two" style="top: calc(68.5px - 37px);"></span>
+            <svg class="beam-svg"><path class="beam-path" fill="currentColor" d="M 35 31.5 L 71 31.5 L 71 37.5 L 35 37.5 Z"></path>
+            </svg>
            </div>
           </div><button type="button" class="drop-zone" data-row="What toppings?" data-slot="3" aria-label="What toppings? 第三個音符，選擇或拖曳節奏卡到這裡"></button> <button type="button" class="drop-zone" data-row="What toppings?" data-slot="4" aria-label="What toppings? 第四個音符，選擇或拖曳節奏卡到這裡"></button>
          </div>
         </div>
         <div class="w-full flex justify-between px-2 mt-2" style="padding-left: 115px;">
-         <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">What</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">toppings?</span>
-         <div class="flex justify-center" style="width: 25%;">
-          <div class="word-drop-slot" data-word-beat="3"><input type="text" placeholder="" aria-label="What toppings? Beat 3 pizza topping">
-          </div>
-         </div>
-         <div class="flex justify-center" style="width: 25%;">
-          <div class="word-drop-slot" data-word-beat="4"><input type="text" placeholder="" aria-label="What toppings? Beat 4 pizza topping">
+         <span class="text-base sm:text-lg font-bold text-[#4a341a]" style="width: 25%; text-align: center;">What</span> <span class="text-base sm:text-lg font-bold text-[#4a341a]" style="width: 25%; text-align: center;">toppings?</span>
+         <div class="flex justify-center" style="width: 50%;">
+          <div class="word-drop-slot w-full max-w-[240px]" data-word-beat="3-4"><input type="text" placeholder="" aria-label="What toppings? Beat 3-4 pizza topping">
           </div>
          </div>
         </div>
@@ -635,6 +698,7 @@
         <div class="staff-frame w-full">
          <div class="staff-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span>
          </div><span class="clef" aria-hidden="true">𝄞</span>
+         <div class="measure-barline" aria-hidden="true"></div>
          <div class="staff-notes">
           <div class="fixed-beat">
            <div class="staff-note static-note" style="--head-top: 82.5px;" aria-hidden="true">
@@ -649,13 +713,9 @@
          </div>
         </div>
         <div class="w-full flex justify-between px-2 mt-2" style="padding-left: 115px;">
-         <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">What</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">crust?</span>
-         <div class="flex justify-center" style="width: 25%;">
-          <div class="word-drop-slot" data-word-beat="3"><input type="text" placeholder="" aria-label="What crust? Beat 3 pizza topping">
-          </div>
-         </div>
-         <div class="flex justify-center" style="width: 25%;">
-          <div class="word-drop-slot" data-word-beat="4"><input type="text" placeholder="" aria-label="What crust? Beat 4 pizza topping">
+         <span class="text-base sm:text-lg font-bold text-[#4a341a]" style="width: 25%; text-align: center;">What</span> <span class="text-base sm:text-lg font-bold text-[#4a341a]" style="width: 25%; text-align: center;">crust?</span>
+         <div class="flex justify-center" style="width: 50%;">
+          <div class="word-drop-slot w-full max-w-[240px]" data-word-beat="3-4"><input type="text" placeholder="" aria-label="What crust? Beat 3-4 pizza topping">
           </div>
          </div>
         </div>
@@ -666,45 +726,43 @@
          </div><span class="clef" aria-hidden="true">𝄞</span>
          <div class="double-barline" aria-hidden="true"></div>
          <div class="staff-notes">
-          <!-- 1: Thank you (兩個八分音符) La, Sol (原本為 Mi, Re -> 調整: "Thank" 往下 0.5行, 即 +7px. 54.5px + 7px = 61.5px. "you"維持68.5px): 斜角調整使橫桿精確連接 -->
+          <!-- 1: Thank you (兩個八分音符) La (idx 5, top 77px -> 微調 62.9px / 68.5px) -->
           <div class="fixed-beat">
-           <div class="staff-note static-note eighth-pair" style="--head-top: 62.9px; --beam-skew: 8deg;" aria-hidden="true">
-            <span class="note-head" style="top: 62.9px;"></span><span class="note-head note-head-two" style="top: 68.5px;"></span> <span class="note-stem" style="height: 42px; top: calc(62.9px - 37px);"></span> <span class="note-stem note-stem-two" style="height: 42px; top: calc(68.5px - 37px);"></span> <span class="note-beam" style="top: calc(62.9px - 37px); width: 36px;"></span>
+           <div class="staff-note static-note eighth-pair" style="--head-top: 62.9px; --head-top-two: 68.5px;" aria-hidden="true"><span class="note-head note-head-one" style="top: 62.9px;"></span> <span class="note-head note-head-two" style="top: 68.5px;"></span> <span class="note-stem note-stem-one" style="top: calc(62.9px - 37px);"></span> <span class="note-stem note-stem-two" style="top: calc(68.5px - 37px);"></span>
+            <svg class="beam-svg"><path class="beam-path" fill="currentColor" d="M 35 25.9 L 71 31.5 L 71 37.5 L 35 31.9 Z"></path>
+            </svg>
            </div>
-          </div><!-- 2: for your (兩個八分音符) Mi, Re (原本頂部為 82.5px / 96.5px. "for"維持82.5px. "your" 往上 0.25行, 即 -3.5px. 96.5px - 3.5px = 93px) -->
+          </div><!-- 2: for your (兩個八分音符) Mi (idx 2, top 98px -> 82.5px / 93px) -->
           <div class="fixed-beat">
-           <div class="staff-note static-note eighth-pair" style="--head-top: 82.5px; --beam-skew: 16deg;" aria-hidden="true">
-            <span class="note-head" style="top: 82.5px;"></span><span class="note-head note-head-two" style="top: 93px;"></span> <span class="note-stem" style="height: 42px; top: calc(82.5px - 37px);"></span> <span class="note-stem note-stem-two" style="height: 42px; top: calc(93px - 37px);"></span> <span class="note-beam" style="top: calc(82.5px - 37px); width: 36px; transform: skewY(16deg);"></span>
+           <div class="staff-note static-note eighth-pair" style="--head-top: 82.5px; --head-top-two: 93px;" aria-hidden="true"><span class="note-head note-head-one" style="top: 82.5px;"></span> <span class="note-head note-head-two" style="top: 93px;"></span> <span class="note-stem note-stem-one" style="top: calc(82.5px - 37px);"></span> <span class="note-stem note-stem-two" style="top: calc(93px - 37px);"></span>
+            <svg class="beam-svg"><path class="beam-path" fill="currentColor" d="M 35 45.5 L 71 56 L 71 62 L 35 51.5 Z"></path>
+            </svg>
            </div>
-          </div><!-- 3: or - (單個四分音符) Do (原本頂部 103.5px 往上移 0.5 行 -> 改為 96.5px，下加線移到 103px 在音符正中間) -->
+          </div><!-- 3: or - (單個四分音符) Do (96.5px, ledger top 103px) -->
           <div class="fixed-beat">
-           <div class="staff-note static-note show-custom-ledger" style="--head-top: 96.5px; --ledger-top: 103px;" aria-hidden="true">
-            <span class="note-head" style="top: 96.5px;"></span><span class="note-stem" style="top: calc(96.5px - 37px);"></span>
+           <div class="staff-note static-note show-custom-ledger" style="--head-top: 96.5px; --ledger-top: 103px;" aria-hidden="true"><span class="note-head" style="top: 96.5px;"></span> <span class="note-stem" style="top: calc(96.5px - 37px);"></span>
            </div>
-          </div><!-- 4: der. (單個四分音符) Do (原本頂部 103.5px 往上移 0.5 行 -> 改為 96.5px，下加線移到 103px 在音符正中間) -->
+          </div><!-- 4: der. (單個四分音符) Do (96.5px, ledger top 103px) -->
           <div class="fixed-beat">
-           <div class="staff-note static-note show-custom-ledger" style="--head-top: 96.5px; --ledger-top: 103px;" aria-hidden="true">
-            <span class="note-head" style="top: 96.5px;"></span><span class="note-stem" style="top: calc(96.5px - 37px);"></span>
+           <div class="staff-note static-note show-custom-ledger" style="--head-top: 96.5px; --ledger-top: 103px;" aria-hidden="true"><span class="note-head" style="top: 96.5px;"></span> <span class="note-stem" style="top: calc(96.5px - 37px);"></span>
            </div>
           </div>
          </div>
         </div>
-        <div class="w-full flex justify-between px-2 mt-2" style="padding-left: 115px;"><span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">Thank you</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">for your</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">or -</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">der.</span>
+        <div class="w-full flex justify-between px-2 mt-2" style="padding-left: 115px;"><span class="text-base sm:text-lg font-bold text-[#4a341a]" style="width: 25%; text-align: center;">Thank you</span> <span class="text-base sm:text-lg font-bold text-[#4a341a]" style="width: 25%; text-align: center;">for your</span> <span class="text-base sm:text-lg font-bold text-[#4a341a]" style="width: 25%; text-align: center;">or -</span> <span class="text-base sm:text-lg font-bold text-[#4a341a]" style="width: 25%; text-align: center;">der.</span>
         </div>
        </section>
       </div>
      </section>
      <aside data-template-id="palette-panel" class="canva-panel rounded-[24px] p-5" aria-labelledby="palette-title">
-<!-- 🎶 Rhythm Cards 標題與說明 -->
-  <h2 id="palette-title" class="canva-text font-extrabold text-xl mb-1">🎶 Rhythm Cards</h2>
-  <p class="canva-text mb-4 text-sm text-gray-700 pl-4">Drag and place the notes.</p>
-      
+      <h2 id="palette-title" data-template-id="palette-title" class="canva-text font-extrabold"></h2>
+      <p data-template-id="palette-helper" class="canva-text mt-1 leading-relaxed"></p>
       <div class="mt-5 grid grid-cols-3 gap-3 lg:grid-cols-1">
        <button type="button" draggable="true" class="rhythm-card flex flex-col items-center justify-center px-3 py-3 text-center" data-rhythm="quarter" aria-pressed="false"> <span class="text-5xl font-serif text-[#2e251f] h-[63px] flex items-center justify-center" aria-hidden="true">♩</span> <span data-template-id="quarter-label" class="canva-text mt-2 font-bold"></span> </button> <button type="button" draggable="true" class="rhythm-card flex flex-col items-center justify-center px-3 py-3 text-center" data-rhythm="eighth" aria-pressed="false"> <span class="text-5xl font-serif text-[#2e251f] h-[63px] flex items-center justify-center" aria-hidden="true">♫</span> <span data-template-id="eighth-label" class="canva-text mt-2 font-bold"></span> </button> <button type="button" draggable="true" class="rhythm-card flex flex-col items-center justify-center px-3 py-3 text-center" data-rhythm="rest" aria-pressed="false"> <span class="rest-mark" aria-hidden="true">𝄽</span> <span data-template-id="rest-label" class="canva-text mt-2 font-bold"></span> </button>
-      </div><!-- 配料卡片區域 -->
+      </div><!-- 配料卡片區域 --> <!-- 配料卡片區域 -->
       <div class="mt-6 border-t border-[#e9d9ba] pt-5">
-       <h3 class="font-bold text-[#4a341a] text-sm mb-3">🍕Toppings</h3>
-       <div class="flex flex-wrap gap-3 justify-center lg:justify-start" id="ingredients-container">
+       <h3 class="font-extrabold text-[#3a2a1e] text-[22px] mb-3">🍕Toppings</h3>
+       <div class="flex flex-wrap gap-2 justify-center lg:justify-start" id="ingredients-container">
         <div class="ingredient-badge" draggable="true" data-word="Basil">
          🍃 Basil
         </div>
@@ -735,7 +793,7 @@
     </section>
    </main>
   </div>
-  <script src="/_sdk/b19ec5e9a6bcccbf.editing_sdk.js" integrity="sha512-zBJgQuXCQdyGFqXgZwfp8p9NowwbyuWhOK/NGHf9nps+IMSAyeeSyv3qhtfcnKWA9sWownxUevRqEhsjnjL55w=="></script>
+  <script src="/_sdk/b7bbbe551ba4f8f5.editing_sdk.js" integrity="sha512-h06pMz6KcVo4Wjvoggb4sS5DZpb55bTriAzBmA0YwbkBA3z2ZXl8CBEbCWT+/fAsm0SwDejJ7jJHOZsLZKqPoQ=="></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
       lucide.createIcons();
@@ -746,19 +804,25 @@
         rest: { label: "四分休止符", type: "rest" }
       };
 
-      // 音階對應表 (0 - 10)
+      // 音階對應表 (0 - 12)
+      // Do：下加一線 (112px), Re：下加一間 (105px), Mi：第一線 (98px), Fa：第一間/或第一線 (91px -> 修改名稱 Fa 為 23 唱名), 
+      // 完美支援使用唱名和音符：
+      // Do：下加一線 (112px), Re：下加一間 (105px), Mi：第一線 (98px), Fa：第二間 (原 Fa：第一間，調整Fa唱名), Sol：第二線 (84px), La：第二間 (77px), Si：第三線 (70px)
+      // 高音Do：第三間 (63px), 高音Re：第四線 (56px), 高音Mi：第四間 (49px), 高音Fa：第五線 (42px), 高音Sol：上加一間 (35px), 高音La：上加一線 (28px)
       const pitches = [
-        { name: "Do", label: "Do · C", top: 110.5, ledger: true },
-        { name: "Re", label: "Re · D", top: 96.5, ledger: false },
-        { name: "Mi", label: "Mi · E", top: 82.5, ledger: false },
-        { name: "Fa", label: "Fa · F", top: 68.5, ledger: false },
-        { name: "Sol", label: "Sol · G", top: 54.5, ledger: false },
-        { name: "La", label: "La · A", top: 40.5, ledger: false },
-        { name: "Si", label: "Si · B", top: 26.5, ledger: false },
-        { name: "Do2", label: "Do · C", top: 12.5, ledger: false },
-        { name: "Re2", label: "Re · D", top: -1.5, ledger: false },
-        { name: "Mi2", label: "Mi · E", top: -15.5, ledger: false },
-        { name: "Fa2", label: "Fa · F", top: -29.5, ledger: false }
+        { name: "Do", label: "Do · C", top: 96.5, ledger: true, upperLedger: false },
+        { name: "Re", label: "Re · D", top: 89.5, ledger: false, upperLedger: false },
+        { name: "Mi", label: "Mi · E", top: 82.5, ledger: false, upperLedger: false },
+        { name: "Fa", label: "Fa · F", top: 75.5, ledger: false, upperLedger: false },
+        { name: "Sol", label: "Sol · G", top: 68.5, ledger: false, upperLedger: false },
+        { name: "La", label: "La · A", top: 61.5, ledger: false, upperLedger: false },
+        { name: "Si", label: "Si · B", top: 54.5, ledger: false, upperLedger: false },
+        { name: "Do2", label: "Do · C", top: 47.5, ledger: false, upperLedger: false },
+        { name: "Re2", label: "Re · D", top: 40.5, ledger: false, upperLedger: false },
+        { name: "Mi2", label: "Mi · E", top: 33.5, ledger: false, upperLedger: false },
+        { name: "Fa2", label: "Fa · F", top: 26.5, ledger: false, upperLedger: false },
+        { name: "Sol2", label: "Sol · G", top: 19.5, ledger: false, upperLedger: false },
+        { name: "La2", label: "La · A", top: 12.5, ledger: false, upperLedger: true }
       ];
 
       const cards = Array.from(document.querySelectorAll("[data-rhythm]"));
@@ -851,18 +915,116 @@
         });
       }
 
-      function applyPitch(note, pitchIndex) {
+      function applyPitch(note, pitchIndex, headIndex = 1) {
         const p = pitches[pitchIndex];
-        note.dataset.pitchIndex = pitchIndex;
-        note.dataset.pitch = p.name;
-        note.style.setProperty("--head-top", p.top + "px");
+        const isEighth = note.classList.contains("eighth-pair");
 
-        // 超過第三線 (Si >= 6) 符桿朝下
-        const stemDown = pitchIndex >= 6;
-        note.classList.toggle("stem-down", stemDown);
+        if (isEighth) {
+          if (headIndex === 1) {
+            note.dataset.pitchIndexOne = pitchIndex;
+            note.dataset.pitchOne = p.name;
+            note.style.setProperty("--head-top", p.top + "px");
+            const headEl = note.querySelector(".note-head-one");
+            const stemEl = note.querySelector(".note-stem-one");
+            if (headEl) headEl.classList.toggle("stem-down-head", pitchIndex >= 6);
+            if (stemEl) stemEl.classList.toggle("stem-down", pitchIndex >= 6);
+            
+            // 獨立控制第一個音符頭的加線 (Do 加線在 103px，高音La在 19px)
+            const ledger1 = note.querySelector(".ledger-one");
+            if (ledger1) {
+              if (p.ledger) {
+                ledger1.style.top = "103px";
+                ledger1.style.left = "10px";
+                ledger1.style.width = "36px";
+                ledger1.style.display = "block";
+              } else if (p.upperLedger) {
+                ledger1.style.top = "19px";
+                ledger1.style.left = "10px";
+                ledger1.style.width = "36px";
+                ledger1.style.display = "block";
+              } else {
+                ledger1.style.display = "none";
+              }
+            }
+          } else {
+            note.dataset.pitchIndexTwo = pitchIndex;
+            note.dataset.pitchTwo = p.name;
+            note.style.setProperty("--head-top-two", p.top + "px");
+            const headEl = note.querySelector(".note-head-two");
+            const stemEl = note.querySelector(".note-stem-two");
+            if (headEl) headEl.classList.toggle("stem-down-head", pitchIndex >= 6);
+            if (stemEl) stemEl.classList.toggle("stem-down", pitchIndex >= 6);
 
-        // 控制 Do 下加線
-        note.classList.toggle("show-ledger-line", p.ledger);
+            // 獨立控制第二個音符頭的加線
+            const ledger2 = note.querySelector(".ledger-two");
+            if (ledger2) {
+              if (p.ledger) {
+                ledger2.style.top = "103px";
+                ledger2.style.left = "46px";
+                ledger2.style.width = "36px";
+                ledger2.style.display = "block";
+              } else if (p.upperLedger) {
+                ledger2.style.top = "19px";
+                ledger2.style.left = "46px";
+                ledger2.style.width = "36px";
+                ledger2.style.display = "block";
+              } else {
+                ledger2.style.display = "none";
+              }
+            }
+          }
+
+          // 連接橫桿 (Beam) 繪製
+          const idx1 = note.dataset.pitchIndexOne !== undefined ? parseInt(note.dataset.pitchIndexOne, 10) : 2;
+          const idx2 = note.dataset.pitchIndexTwo !== undefined ? parseInt(note.dataset.pitchIndexTwo, 10) : 2;
+          const top1 = pitches[idx1].top;
+          const top2 = pitches[idx2].top;
+
+          // 樂理判斷：只有當兩個音頭都超過或等於第三線（>=6）時，符桿與 Beam 才會全朝下，否則都維持朝上。
+          const stemDown = (idx1 >= 6 && idx2 >= 6);
+
+          const stem1 = note.querySelector(".note-stem-one");
+          const stem2 = note.querySelector(".note-stem-two");
+          const head1 = note.querySelector(".note-head-one");
+          const head2 = note.querySelector(".note-head-two");
+
+          if (stem1 && stem2 && head1 && head2) {
+            stem1.classList.toggle("stem-down", stemDown);
+            stem2.classList.toggle("stem-down", stemDown);
+            head1.classList.toggle("stem-down-head", stemDown);
+            head2.classList.toggle("stem-down-head", stemDown);
+
+            const beamPath = note.querySelector(".beam-path");
+            if (beamPath) {
+              // 修正八分音符放入與移動時符桿與 Beam 完美連接
+              // 朝上時，符桿在右側 (x=35, x=71)，高度在符桿頂端 (top - 37)
+              // 朝下時，符桿在左側 (x=18.5, x=54.5)，高度在符桿底端 (top + 8 + 42 = top + 50)
+              const x1 = stemDown ? 18.5 : 35;
+              const x2 = stemDown ? 54.5 : 71;
+              const y1 = stemDown ? top1 + 50 : top1 - 37;
+              const y2 = stemDown ? top2 + 50 : top2 - 37;
+              
+              const offset = stemDown ? -6 : 6;
+              beamPath.setAttribute("d", `M ${x1} ${y1} L ${x2} ${y2} L ${x2} ${y2 + offset} L ${x1} ${y1 + offset} Z`);
+            }
+          }
+        } else {
+          // 單音符
+          note.dataset.pitchIndex = pitchIndex;
+          note.dataset.pitch = p.name;
+          note.style.setProperty("--head-top", p.top + "px");
+
+          // 超過從下往上算第三線 (Si, index >= 6) 符桿與符頭方向精確朝左側向下
+          const stemDown = pitchIndex >= 6;
+          const headEl = note.querySelector(".note-head");
+          const stemEl = note.querySelector(".note-stem");
+          if (headEl) headEl.classList.toggle("stem-down-head", stemDown);
+          if (stemEl) stemEl.classList.toggle("stem-down", stemDown);
+
+          // 控制下加線與上加線 (精確水平垂直居中)
+          note.classList.toggle("show-ledger-line", p.ledger);
+          note.classList.toggle("show-upper-ledger", p.upperLedger);
+        }
 
         const label = note.querySelector(".pitch-label");
         if (label) label.textContent = p.label;
@@ -882,17 +1044,29 @@
         note.tabIndex = 0;
         note.setAttribute("role", "slider");
         note.setAttribute("aria-valuemin", "0");
-        note.setAttribute("aria-valuemax", "10");
+        note.setAttribute("aria-valuemax", "12");
 
         if (rhythm === "eighth") {
           note.classList.add("eighth-pair");
-          note.innerHTML = '<span class="note-head"></span><span class="note-head note-head-two"></span><span class="note-stem"></span><span class="note-stem note-stem-two"></span><span class="note-beam"></span><span class="pitch-label"></span>';
+          note.innerHTML = `
+            <span class="note-head note-head-one" data-head-id="1"></span>
+            <span class="note-head note-head-two" data-head-id="2"></span>
+            <span class="note-stem note-stem-one"></span>
+            <span class="note-stem note-stem-two"></span>
+            <span class="ledger-one"></span>
+            <span class="ledger-two"></span>
+            <svg class="beam-svg"><path class="beam-path" fill="currentColor" d=""></path></svg>
+            <span class="pitch-label"></span>
+          `;
+          note.dataset.pitchIndexOne = "2";
+          note.dataset.pitchIndexTwo = "2";
+          applyPitch(note, 2, 1);
+          applyPitch(note, 2, 2);
         } else {
-          note.innerHTML = '<span class="note-head"></span><span class="note-stem"></span><span class="pitch-label"></span>';
+          note.innerHTML = '<span class="note-head" data-head-id="1"></span><span class="note-stem"></span><span class="pitch-label"></span>';
+          applyPitch(note, 2, 1);
         }
 
-        // 預設給 Mi (index 2)
-        applyPitch(note, 2);
         note.setAttribute("aria-valuenow", "2");
         note.setAttribute("aria-valuetext", "Mi，E，符桿朝上");
         addPitchControls(note);
@@ -900,40 +1074,60 @@
       }
 
       function updateAccessiblePitch(note) {
-        const index = parseInt(note.dataset.pitchIndex, 10);
-        const p = pitches[index];
-        note.setAttribute("aria-valuenow", String(index));
-        note.setAttribute("aria-valuetext", p.label + (index >= 6 ? "，符桿朝下" : "，符桿朝上"));
+        if (note.classList.contains("eighth-pair")) {
+          const idx1 = parseInt(note.dataset.pitchIndexOne, 10) || 2;
+          const idx2 = parseInt(note.dataset.pitchIndexTwo, 10) || 2;
+          note.setAttribute("aria-valuenow", `${idx1},${idx2}`);
+          note.setAttribute("aria-valuetext", `音符一: ${pitches[idx1].label}, 音符二: ${pitches[idx2].label}`);
+        } else {
+          const index = parseInt(note.dataset.pitchIndex, 10) || 2;
+          const p = pitches[index];
+          note.setAttribute("aria-valuenow", String(index));
+          note.setAttribute("aria-valuetext", p.label + (index >= 6 ? "，符桿朝下" : "，符桿朝上"));
+        }
       }
 
       function addPitchControls(note) {
         let dragging = false;
         let startY = 0;
         let initialIndex = 2;
+        let targetHead = 1; // 1代表音符一，2代表音符二
 
+        // 監聽各音符頭的拖曳
         note.addEventListener("pointerdown", (event) => {
+          const head = event.target.closest("[data-head-id]");
+          if (!head) return;
+
           dragging = true;
           startY = event.clientY;
-          initialIndex = parseInt(note.dataset.pitchIndex, 10) || 2;
+          targetHead = parseInt(head.dataset.headId, 10) || 1;
+          
+          if (note.classList.contains("eighth-pair")) {
+            initialIndex = parseInt(targetHead === 1 ? note.dataset.pitchIndexOne : note.dataset.pitchIndexTwo, 10) || 2;
+          } else {
+            initialIndex = parseInt(note.dataset.pitchIndex, 10) || 2;
+          }
+
           note.classList.add("dragging");
-          note.setPointerCapture(event.pointerId);
+          head.setPointerCapture(event.pointerId);
+          event.stopPropagation();
           event.preventDefault();
         });
 
         note.addEventListener("pointermove", (event) => {
           if (!dragging) return;
           const deltaY = event.clientY - startY;
-          // 每 7px 行距切換一格音高。使用更精確的 Math.round 切換，提升拖曳至五線譜時的音高位置手感與準確度
-          const stepOffset = -Math.round(deltaY / 7);
+          // 將原本 / 7 改為 / 6.5 或調整除數，增加拖曳靈敏度與音符定位精準度
+          const stepOffset = -Math.round(deltaY / 6.8);
           let targetIndex = initialIndex + stepOffset;
           if (targetIndex < 0) targetIndex = 0;
-          if (targetIndex > 10) targetIndex = 10;
+          if (targetIndex > 12) targetIndex = 12;
           
-          applyPitch(note, targetIndex);
+          applyPitch(note, targetIndex, targetHead);
           updateAccessiblePitch(note);
         });
 
-        function finishDrag() {
+        function finishDrag(event) {
           if (!dragging) return;
           dragging = false;
           note.classList.remove("dragging");
@@ -945,11 +1139,23 @@
         note.addEventListener("keydown", (event) => {
           if (event.key === "ArrowUp" || event.key === "ArrowDown") {
             event.preventDefault();
-            let index = parseInt(note.dataset.pitchIndex, 10) || 2;
-            index = event.key === "ArrowUp" ? index + 1 : index - 1;
-            if (index < 0) index = 0;
-            if (index > 10) index = 10;
-            applyPitch(note, index);
+            const isEighth = note.classList.contains("eighth-pair");
+            if (isEighth) {
+              // 鍵盤操作時，同時微調兩個音高的範例
+              let idx1 = parseInt(note.dataset.pitchIndexOne, 10) || 2;
+              let idx2 = parseInt(note.dataset.pitchIndexTwo, 10) || 2;
+              const offset = event.key === "ArrowUp" ? 1 : -1;
+              idx1 = Math.max(0, Math.min(12, idx1 + offset));
+              idx2 = Math.max(0, Math.min(12, idx2 + offset));
+              applyPitch(note, idx1, 1);
+              applyPitch(note, idx2, 2);
+            } else {
+              let index = parseInt(note.dataset.pitchIndex, 10) || 2;
+              index = event.key === "ArrowUp" ? index + 1 : index - 1;
+              if (index < 0) index = 0;
+              if (index > 12) index = 12;
+              applyPitch(note, index, 1);
+            }
             updateAccessiblePitch(note);
           }
         });
