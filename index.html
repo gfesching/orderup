@@ -1,0 +1,1034 @@
+<!doctype html>
+<html lang="zh-Hant">
+ <head><script>window["__codeletBootstrap__"]=JSON.parse('{"A":"A","B":"20260716-05-1ab63ad"}');</script><script src="/_sdk/f432b76fb310b513.telemetry_sdk.js" integrity="sha512-9FJQ55EKmmqhyyik8BhrMVfm0+iYYfb8uOlRsjtkxJMEI97qOVEI4PnHohDjQAtvAep0IOEpdQ64eki0sz62ug=="></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recorder Rhythm Builder</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&amp;family=Libre+Baskerville:wght@400;700&amp;display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #34271f;
+      --orange: #cf5b13;
+      --orange-dark: #9d3d0c;
+      --paper: #fff8e6;
+      --yellow: #f5cd55;
+      --yellow-deep: #d6a51c;
+      --staff: #3f342c;
+      --staff-gap: 14px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      width: 100%;
+      min-height: calc(100 * min(var(--vh, 1vh), 1vh));
+      margin: 0;
+      color: var(--ink);
+      font-family: "DM Sans", sans-serif;
+      background:
+        radial-gradient(circle at 10% 12%, rgba(255, 210, 104, .36) 0 3%, transparent 3.3%),
+        radial-gradient(circle at 92% 84%, rgba(92, 31, 3, .24) 0 12%, transparent 12.3%),
+        linear-gradient(135deg, #ec851d 0%, #cf5b13 55%, #ad410b 100%);
+    }
+
+    .app-wrapper {
+      width: 100%;
+      min-height: calc(100 * min(var(--vh, 1vh), 1vh));
+      padding: 1.5rem;
+    }
+
+    .worksheet {
+      position: relative;
+      width: 100%;
+      max-width: 1120px;
+      margin: 0 auto;
+      overflow: hidden;
+      border-radius: 32px;
+      background: var(--paper);
+      box-shadow: 0 24px 60px rgba(83, 28, 2, .35);
+    }
+
+    .worksheet::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: .25;
+      background-image: radial-gradient(rgba(115, 71, 20, .16) .8px, transparent .8px);
+      background-size: 18px 18px;
+    }
+
+    .music-burst {
+      position: absolute;
+      top: -48px;
+      right: -42px;
+      width: 155px;
+      height: 155px;
+      border-radius: 50%;
+      background: #f5cc52;
+      transform: rotate(13deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .music-burst::before {
+      content: "🛎️";
+      font-size: 3.8rem;
+      margin-top: 15px;
+      margin-left: -15px;
+    }
+
+    .music-burst::after {
+      content: "✏️";
+      position: absolute;
+      font-size: 1.8rem;
+      bottom: 24px;
+      right: 28px;
+    }
+
+    .activity-row {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      margin-bottom: -4px;
+    }
+
+    .staff-frame {
+      position: relative;
+      width: 100%;
+      min-height: 166px;
+      overflow: visible;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, .28);
+      box-shadow: inset 0 0 0 2px rgba(93, 60, 27, .09);
+    }
+
+    .staff-lines {
+      position: absolute;
+      top: 54px;
+      left: 0;
+      right: 0;
+      height: 56px;
+      pointer-events: none;
+    }
+
+    .staff-lines span {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: rgba(63, 52, 44, .78);
+    }
+
+    .staff-lines span:nth-child(1) { top: 56px; } /* 第一線 (E) - Mi */
+    .staff-lines span:nth-child(2) { top: 42px; } /* 第二線 (G) - Sol */
+    .staff-lines span:nth-child(3) { top: 28px; } /* 第三線 (B) */
+    .staff-lines span:nth-child(4) { top: 14px; } /* 第四線 (D) */
+    .staff-lines span:nth-child(5) { top: 0px; }  /* 第五線 (F) */
+
+    /* 高音譜記號與拍號定位調整 */
+    .clef {
+      position: absolute;
+      top: 31px; /* 往下移 0.5 行 (約 7px，原為 24px) */
+      left: 14px;
+      z-index: 2;
+      color: var(--staff);
+      font-family: "Libre Baskerville", serif;
+      font-size: 6.8rem;
+      line-height: 1;
+      transform: scaleX(.7);
+    }
+
+    /* 終止雙線 */
+    .double-barline {
+      position: absolute;
+      top: 54px;
+      right: 4px;
+      height: 56px;
+      width: 7px;
+      border-left: 2px solid rgba(63, 52, 44, .78);
+      border-right: 4px solid rgba(63, 52, 44, .78);
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* 4/4 拍號定位調整 */
+    .signature {
+      position: absolute;
+      top: 61px; /* 往下移 0.5 行 (原為 55px) */
+      left: 76px;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--staff);
+      font-family: "Libre Baskerville", serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      line-height: .75;
+    }
+
+    .staff-notes {
+      position: relative;
+      z-index: 4;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(62px, 1fr));
+      gap: .75rem;
+      min-height: 166px;
+      padding: 0px 18px 26px 115px;
+    }
+
+    .fixed-beat,
+    .drop-zone {
+      position: relative;
+      display: flex;
+      min-height: 112px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 15px;
+    }
+
+    .fixed-beat {
+      background: transparent;
+    }
+
+    .drop-zone {
+      border: 2px dashed var(--orange);
+      background: rgba(255, 232, 145, .28);
+      cursor: pointer;
+      transition: transform .16s ease, background .16s ease, outline .16s ease;
+      touch-action: none;
+    }
+
+    .drop-zone:hover,
+    .drop-zone:focus-visible,
+    .drop-zone.drag-over {
+      outline: 3px solid rgba(207, 91, 19, .28);
+      outline-offset: 2px;
+      background: rgba(255, 225, 132, .45);
+      transform: translateY(-2px);
+    }
+
+    .drop-zone.has-rhythm {
+      border: none;
+      background: transparent;
+    }
+
+    .rhythm-card {
+      min-height: 116px;
+      cursor: grab;
+      border: 0;
+      border-radius: 19px;
+      background: var(--yellow);
+      box-shadow: 0 7px 0 rgba(127, 85, 11, .2);
+      transition: transform .16s ease, box-shadow .16s ease, background .16s ease;
+      touch-action: manipulation;
+    }
+
+    .rhythm-card:hover,
+    .rhythm-card:focus-visible,
+    .rhythm-card.is-selected {
+      outline: 3px solid rgba(207, 91, 19, .3);
+      outline-offset: 3px;
+      background: #ffdc69;
+      box-shadow: 0 12px 0 rgba(127, 85, 11, .16);
+      transform: translateY(-5px) rotate(-1deg);
+    }
+
+    .rhythm-card:active { cursor: grabbing; }
+
+    .mini-note {
+      position: relative;
+      width: 70px;
+      height: 63px;
+      color: #2e251f;
+    }
+
+    .mini-head,
+    .note-head {
+      position: absolute;
+      width: 20px;
+      height: 13px;
+      border-radius: 50%;
+      background: currentColor;
+      transform: rotate(-24deg);
+    }
+
+    .mini-head {
+      left: 20px;
+      bottom: 12px;
+    }
+
+    .mini-stem {
+      position: absolute;
+      left: 37px;
+      bottom: 16px;
+      width: 3.5px;
+      height: 32px;
+      border-radius: 2px;
+      background: currentColor;
+    }
+
+    /* 修正 Quarter Note: 符桿在右邊向上 */
+    .mini-quarter .mini-head {
+      left: 24px;
+      bottom: 12px;
+    }
+    .mini-quarter .mini-stem {
+      left: 41px;
+      bottom: 16px;
+      height: 32px;
+    }
+
+    /* 修正 Two Eighth Notes: 水平橫桿 */
+    .mini-eighth .mini-head:first-child {
+      left: 14px;
+      bottom: 12px;
+    }
+
+    .mini-eighth .mini-head:nth-child(2) {
+      left: 46px;
+      bottom: 12px;
+    }
+
+    .mini-eighth .mini-stem:first-of-type {
+      left: 31px;
+      bottom: 16px;
+      height: 30px;
+    }
+
+    .mini-eighth .mini-stem:nth-of-type(2) {
+      left: 63px;
+      bottom: 16px;
+      height: 30px;
+    }
+
+    .mini-beam {
+      position: absolute;
+      left: 31px;
+      top: 17px;
+      width: 32px;
+      height: 6px;
+      border-radius: 1px;
+      background: currentColor;
+    }
+
+    .staff-note {
+      position: relative;
+      width: 72px;
+      height: 100px;
+      color: #2e251f;
+      touch-action: none;
+      cursor: ns-resize;
+      user-select: none;
+    }
+
+    .staff-note .pitch-label {
+      display: none !important;
+    }
+
+    .staff-note:hover .pitch-label,
+    .staff-note:focus-visible .pitch-label,
+    .staff-note.dragging .pitch-label {
+      opacity: 1;
+    }
+
+    /* 
+      音符位置與音高映射：
+      由下而上：
+      0: Do (下加一線) - top: 110.5px (需加一條短下加線)
+      1: Re (下加一間) - top: 96.5px
+      2: Mi (第一線) - top: 82.5px
+      3: Fa (第一間) - top: 68.5px
+      4: Sol (第二線) - top: 54.5px
+      5: La (第二間) - top: 40.5px
+      6: Si (第三線) - top: 26.5px -> 超過第三線（>=6）符桿朝下
+      7: Do2 (第三間) - top: 12.5px
+      8: Re2 (第四線) - top: -1.5px
+      9: Mi2 (第四間) - top: -15.5px
+      10: Fa2 (第五線) - top: -29.5px
+    */
+    .staff-note .note-head {
+      left: 24px;
+      top: var(--head-top);
+    }
+
+    /* 下加一線 (Do) 輔助線 */
+    .staff-note::before {
+      content: "";
+      position: absolute;
+      left: 16px;
+      top: 116px;
+      width: 36px;
+      height: 2px;
+      background: rgba(63, 52, 44, 0.78);
+      display: none;
+      pointer-events: none;
+    }
+    .staff-note.show-ledger-line::before {
+      display: block;
+    }
+
+    /* 特定音符輔助線 */
+    .staff-note.show-custom-ledger::before {
+      display: block;
+      top: var(--ledger-top, 110px);
+    }
+
+    .staff-note .note-stem {
+      position: absolute;
+      left: 42px;
+      top: calc(var(--head-top) - 37px);
+      width: 3.5px;
+      height: 42px;
+      border-radius: 2px;
+      background: currentColor;
+      transform-origin: bottom center;
+    }
+
+    .staff-note.stem-down .note-stem {
+      left: 25px;
+      top: calc(var(--head-top) + 8px);
+      transform-origin: top center;
+    }
+
+    .staff-note.stem-down .note-head {
+      transform: rotate(-24deg) scaleX(-1);
+    }
+
+    .staff-note.eighth-pair {
+      width: 84px;
+    }
+
+    .staff-note.eighth-pair .note-head {
+      left: 18px;
+    }
+
+    .staff-note.eighth-pair .note-head.note-head-two {
+      left: 50px;
+    }
+
+    .staff-note.eighth-pair .note-stem {
+      left: 36px;
+    }
+
+    .staff-note.eighth-pair .note-stem.note-stem-two {
+      left: 68px;
+    }
+
+    .staff-note.eighth-pair.stem-down .note-stem {
+      left: 19px;
+    }
+
+    .staff-note.eighth-pair.stem-down .note-stem.note-stem-two {
+      left: 51px;
+    }
+
+    .staff-note.eighth-pair .note-beam {
+      position: absolute;
+      left: 36px;
+      top: calc(var(--head-top) - 37px);
+      width: 34px;
+      height: 6px;
+      border-radius: 1px;
+      background: currentColor;
+      transform-origin: left top;
+      transform: skewY(var(--beam-skew, 0deg));
+    }
+
+    .rest-mark {
+      color: #2e251f;
+      font-family: "Libre Baskerville", serif;
+      font-size: 3.8rem;
+      line-height: 1;
+    }
+
+    .staff-frame .rest-mark {
+      margin-top: 15px;
+    }
+
+    .static-note {
+      pointer-events: none;
+      cursor: default;
+    }
+
+    .static-note .pitch-label {
+      display: none;
+    }
+
+    .note-hint {
+      position: absolute;
+      top: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, .68);
+      color: #805d35;
+      font-size: .59rem;
+      font-weight: 800;
+      letter-spacing: .02em;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity .15s ease;
+    }
+
+    .drop-zone.has-rhythm:hover .note-hint,
+    .drop-zone.has-rhythm:focus-within .note-hint {
+      opacity: 1;
+    }
+
+    /* 支援配料卡片拖曳與調整樣式 */
+    .ingredient-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: #fdf5d6;
+      border: 2px solid #e1aa33;
+      border-radius: 20px;
+      padding: 8px 24px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: #4a341a;
+      cursor: grab;
+      box-shadow: 0 4px 0 rgba(225, 170, 51, 0.4);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      user-select: none;
+      touch-action: none;
+      width: calc(50% - 10px); /* 兩列均勻排列 */
+    }
+
+    .ingredient-badge:active {
+      cursor: grabbing;
+      transform: scale(0.95);
+    }
+
+    .word-drop-slot {
+      min-width: 90px;
+      min-height: 38px;
+      border: 2px dashed #bba181;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.4);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px 8px;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    .word-drop-slot input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      text-align: center;
+      font-weight: bold;
+      color: #4a341a;
+      outline: none;
+    }
+
+    .word-drop-slot.drag-over {
+      background: rgba(255, 221, 115, 0.4);
+      border-color: var(--orange);
+    }
+
+    @media (max-width: 720px) {
+      .app-wrapper { padding: .8rem; }
+      .worksheet { border-radius: 24px; }
+
+      .activity-row {
+        gap: .45rem;
+      }
+
+      .staff-notes {
+        grid-template-columns: repeat(4, minmax(50px, 1fr));
+        gap: .36rem;
+        padding-left: 92px;
+        padding-right: 9px;
+      }
+
+      .clef { left: 9px; top: 12px; font-size: 5.4rem; }
+      .signature { left: 55px; top: 38px; font-size: 1.8rem; }
+      .rhythm-card { min-height: 102px; }
+      .staff-note { transform: scale(.9); }
+    }
+  </style>
+  <script src="/_sdk/e3937a0574eb2d69.data_sdk.js" type="text/javascript" integrity="sha512-xbp/ACqEQy1aDxYMtXTrR3y5MUbzxuggRR/9sD48Gl4VhLMMCiAHsxMaFV6DTdeBpR6ymF+t2zhPKYkWM3+Jfw=="></script>
+  <script src="/_sdk/9432170dbd2ae0df.resizing_sdk.js" type="text/javascript" integrity="sha512-FeT+58sb1f9ejWPWFjCbJvTT+SDwGV+ngrHUnlO7TWEOoqwOLj6p256kO3vOL7DIWl1cIgrobiof8v2bOigwPg=="></script>
+ </head>
+ <body data-template-id="__page-root">
+  <div class="app-wrapper">
+   <main class="worksheet px-5 py-7 sm:px-9 sm:py-10">
+    <header class="relative z-10 max-w-3xl">
+     <h1 data-template-id="page-title" class="canva-text font-extrabold leading-tight"></h1>
+<h1 class="text-3xl font-extrabold text-center -mt-8 mb-2">
+  🪈 Let's play the recorder. Order up!
+</h1>
+     <p data-template-id="page-subtitle" class="canva-text mt-3 max-w-2xl leading-relaxed"></p>
+    </header>
+    <section class="relative z-10 mt-8 grid gap-7 lg:grid-cols-[minmax(0,1fr)_250px]" aria-label="節奏與音高活動">
+     <section data-template-id="activity-panel" class="canva-section rounded-[24px] p-4 sm:p-6" aria-labelledby="activity-heading">
+      <div class="space-y-7">
+       <section class="activity-row" aria-labelledby="row-size-title">
+        <div class="staff-frame w-full">
+         <div class="staff-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span>
+         </div><span class="clef" aria-hidden="true">𝄞</span> <span class="signature" aria-hidden="true"><span>4</span><span>4</span></span>
+         <div class="staff-notes">
+          <div class="fixed-beat">
+           <div class="staff-note static-note" style="--head-top: 82.5px;" aria-hidden="true">
+            <span class="note-head"></span><span class="note-stem"></span>
+           </div>
+          </div>
+          <div class="fixed-beat">
+           <div class="staff-note static-note" style="--head-top: 68.5px;" aria-hidden="true">
+            <span class="note-head"></span><span class="note-stem"></span>
+           </div>
+          </div><button type="button" class="drop-zone" data-row="What size?" data-slot="3" aria-label="What size? 第三個音符，選擇或拖曳節奏卡到這裡"></button> <button type="button" class="drop-zone" data-row="What size?" data-slot="4" aria-label="What size? 第四個音符，選擇或拖曳節奏卡到這裡"></button>
+         </div>
+        </div>
+        <div class="w-full flex justify-between px-2 mt-2" style="padding-left: 115px;">
+         <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">What</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">size?</span>
+         <div class="flex justify-center" style="width: 25%;">
+          <div class="word-drop-slot" data-word-beat="3"><input type="text" placeholder="" aria-label="What size? Beat 3 pizza topping">
+          </div>
+         </div>
+         <div class="flex justify-center" style="width: 25%;">
+          <div class="word-drop-slot" data-word-beat="4"><input type="text" placeholder="" aria-label="What size? Beat 4 pizza topping">
+          </div>
+         </div>
+        </div>
+       </section>
+       <section class="activity-row" aria-labelledby="row-toppings-title">
+        <div class="staff-frame w-full">
+         <div class="staff-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span>
+         </div><span class="clef" aria-hidden="true">𝄞</span>
+         <div class="staff-notes">
+          <div class="fixed-beat">
+           <div class="staff-note static-note" style="--head-top: 82.5px;" aria-hidden="true">
+            <span class="note-head"></span><span class="note-stem"></span>
+           </div>
+          </div>
+          <div class="fixed-beat">
+           <div class="staff-note static-note eighth-pair" style="--head-top: 68.5px;" aria-hidden="true">
+            <span class="note-head"></span><span class="note-head note-head-two"></span> <span class="note-stem"></span><span class="note-stem note-stem-two"></span><span class="note-beam"></span>
+           </div>
+          </div><button type="button" class="drop-zone" data-row="What toppings?" data-slot="3" aria-label="What toppings? 第三個音符，選擇或拖曳節奏卡到這裡"></button> <button type="button" class="drop-zone" data-row="What toppings?" data-slot="4" aria-label="What toppings? 第四個音符，選擇或拖曳節奏卡到這裡"></button>
+         </div>
+        </div>
+        <div class="w-full flex justify-between px-2 mt-2" style="padding-left: 115px;">
+         <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">What</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">toppings?</span>
+         <div class="flex justify-center" style="width: 25%;">
+          <div class="word-drop-slot" data-word-beat="3"><input type="text" placeholder="" aria-label="What toppings? Beat 3 pizza topping">
+          </div>
+         </div>
+         <div class="flex justify-center" style="width: 25%;">
+          <div class="word-drop-slot" data-word-beat="4"><input type="text" placeholder="" aria-label="What toppings? Beat 4 pizza topping">
+          </div>
+         </div>
+        </div>
+       </section>
+       <section class="activity-row" aria-labelledby="row-crust-title">
+        <div class="staff-frame w-full">
+         <div class="staff-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span>
+         </div><span class="clef" aria-hidden="true">𝄞</span>
+         <div class="staff-notes">
+          <div class="fixed-beat">
+           <div class="staff-note static-note" style="--head-top: 82.5px;" aria-hidden="true">
+            <span class="note-head"></span><span class="note-stem"></span>
+           </div>
+          </div>
+          <div class="fixed-beat">
+           <div class="staff-note static-note" style="--head-top: 68.5px;" aria-hidden="true">
+            <span class="note-head"></span><span class="note-stem"></span>
+           </div>
+          </div><button type="button" class="drop-zone" data-row="What crust?" data-slot="3" aria-label="What crust? 第三個音符，選擇或拖曳節奏卡到這裡"></button> <button type="button" class="drop-zone" data-row="What crust?" data-slot="4" aria-label="What crust? 第四個音符，選擇或拖曳節奏卡到這裡"></button>
+         </div>
+        </div>
+        <div class="w-full flex justify-between px-2 mt-2" style="padding-left: 115px;">
+         <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">What</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">crust?</span>
+         <div class="flex justify-center" style="width: 25%;">
+          <div class="word-drop-slot" data-word-beat="3"><input type="text" placeholder="" aria-label="What crust? Beat 3 pizza topping">
+          </div>
+         </div>
+         <div class="flex justify-center" style="width: 25%;">
+          <div class="word-drop-slot" data-word-beat="4"><input type="text" placeholder="" aria-label="What crust? Beat 4 pizza topping">
+          </div>
+         </div>
+        </div>
+       </section><!-- 第四行 結帳與送達 --> <!-- 第四行 結帳與送達 (固定音符 La, Sol, Mi, Re, Do, Do 與固定歌詞，無空白填空) -->
+       <section class="activity-row" aria-labelledby="row-order-title">
+        <div class="staff-frame w-full">
+         <div class="staff-lines" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span>
+         </div><span class="clef" aria-hidden="true">𝄞</span>
+         <div class="double-barline" aria-hidden="true"></div>
+         <div class="staff-notes">
+          <!-- 1: Thank you (兩個八分音符) La, Sol (原本為 Mi, Re -> 調整: "Thank" 往下 0.5行, 即 +7px. 54.5px + 7px = 61.5px. "you"維持68.5px): 斜角調整使橫桿精確連接 -->
+          <div class="fixed-beat">
+           <div class="staff-note static-note eighth-pair" style="--head-top: 62.9px; --beam-skew: 8deg;" aria-hidden="true">
+            <span class="note-head" style="top: 62.9px;"></span><span class="note-head note-head-two" style="top: 68.5px;"></span> <span class="note-stem" style="height: 42px; top: calc(62.9px - 37px);"></span> <span class="note-stem note-stem-two" style="height: 42px; top: calc(68.5px - 37px);"></span> <span class="note-beam" style="top: calc(62.9px - 37px); width: 36px;"></span>
+           </div>
+          </div><!-- 2: for your (兩個八分音符) Mi, Re (原本頂部為 82.5px / 96.5px. "for"維持82.5px. "your" 往上 0.25行, 即 -3.5px. 96.5px - 3.5px = 93px) -->
+          <div class="fixed-beat">
+           <div class="staff-note static-note eighth-pair" style="--head-top: 82.5px; --beam-skew: 16deg;" aria-hidden="true">
+            <span class="note-head" style="top: 82.5px;"></span><span class="note-head note-head-two" style="top: 93px;"></span> <span class="note-stem" style="height: 42px; top: calc(82.5px - 37px);"></span> <span class="note-stem note-stem-two" style="height: 42px; top: calc(93px - 37px);"></span> <span class="note-beam" style="top: calc(82.5px - 37px); width: 36px; transform: skewY(16deg);"></span>
+           </div>
+          </div><!-- 3: or - (單個四分音符) Do (原本頂部 103.5px 往上移 0.5 行 -> 改為 96.5px，下加線移到 103px 在音符正中間) -->
+          <div class="fixed-beat">
+           <div class="staff-note static-note show-custom-ledger" style="--head-top: 96.5px; --ledger-top: 103px;" aria-hidden="true">
+            <span class="note-head" style="top: 96.5px;"></span><span class="note-stem" style="top: calc(96.5px - 37px);"></span>
+           </div>
+          </div><!-- 4: der. (單個四分音符) Do (原本頂部 103.5px 往上移 0.5 行 -> 改為 96.5px，下加線移到 103px 在音符正中間) -->
+          <div class="fixed-beat">
+           <div class="staff-note static-note show-custom-ledger" style="--head-top: 96.5px; --ledger-top: 103px;" aria-hidden="true">
+            <span class="note-head" style="top: 96.5px;"></span><span class="note-stem" style="top: calc(96.5px - 37px);"></span>
+           </div>
+          </div>
+         </div>
+        </div>
+        <div class="w-full flex justify-between px-2 mt-2" style="padding-left: 115px;"><span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">Thank you</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">for your</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">or -</span> <span class="text-sm font-bold text-[#4a341a]" style="width: 25%; text-align: center;">der.</span>
+        </div>
+       </section>
+      </div>
+     </section>
+     <aside data-template-id="palette-panel" class="canva-panel rounded-[24px] p-5" aria-labelledby="palette-title">
+<!-- 🎶 Rhythm Cards 標題與說明 -->
+  <h2 id="palette-title" class="canva-text font-extrabold text-xl mb-1">🎶 Rhythm Cards</h2>
+  <p class="canva-text mb-4 text-sm text-gray-700 pl-4">Drag and place the notes.</p>
+      
+      <div class="mt-5 grid grid-cols-3 gap-3 lg:grid-cols-1">
+       <button type="button" draggable="true" class="rhythm-card flex flex-col items-center justify-center px-3 py-3 text-center" data-rhythm="quarter" aria-pressed="false"> <span class="text-5xl font-serif text-[#2e251f] h-[63px] flex items-center justify-center" aria-hidden="true">♩</span> <span data-template-id="quarter-label" class="canva-text mt-2 font-bold"></span> </button> <button type="button" draggable="true" class="rhythm-card flex flex-col items-center justify-center px-3 py-3 text-center" data-rhythm="eighth" aria-pressed="false"> <span class="text-5xl font-serif text-[#2e251f] h-[63px] flex items-center justify-center" aria-hidden="true">♫</span> <span data-template-id="eighth-label" class="canva-text mt-2 font-bold"></span> </button> <button type="button" draggable="true" class="rhythm-card flex flex-col items-center justify-center px-3 py-3 text-center" data-rhythm="rest" aria-pressed="false"> <span class="rest-mark" aria-hidden="true">𝄽</span> <span data-template-id="rest-label" class="canva-text mt-2 font-bold"></span> </button>
+      </div><!-- 配料卡片區域 -->
+      <div class="mt-6 border-t border-[#e9d9ba] pt-5">
+       <h3 class="font-bold text-[#4a341a] text-sm mb-3">🍕Toppings</h3>
+       <div class="flex flex-wrap gap-3 justify-center lg:justify-start" id="ingredients-container">
+        <div class="ingredient-badge" draggable="true" data-word="Basil">
+         🍃 Basil
+        </div>
+        <div class="ingredient-badge" draggable="true" data-word="Sausage">
+         🍖 Sausage
+        </div>
+        <div class="ingredient-badge" draggable="true" data-word="Peppers">
+         🫑 Peppers
+        </div>
+        <div class="ingredient-badge" draggable="true" data-word="Pepperoni">
+         🔴 Pepperoni
+        </div>
+        <div class="ingredient-badge" draggable="true" data-word="Mushrooms">
+         🍄 Mushrooms
+        </div>
+        <div class="ingredient-badge" draggable="true" data-word="Pineapple">
+         🍍 Pineapple
+        </div>
+        <div class="ingredient-badge" draggable="true" data-word="Onions">
+         🧅 Onions
+        </div>
+        <div class="ingredient-badge" draggable="true" data-word="Tomatos">
+         🍅 Tomatos
+        </div>
+       </div>
+      </div><button id="clear-button" data-template-id="clear-button" type="button" class="canva-button mt-6 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 font-bold transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-orange-300"> <i data-lucide="rotate-ccw" class="h-5 w-5" aria-hidden="true"></i> </button>
+     </aside>
+    </section>
+   </main>
+  </div>
+  <script src="/_sdk/b19ec5e9a6bcccbf.editing_sdk.js" integrity="sha512-zBJgQuXCQdyGFqXgZwfp8p9NowwbyuWhOK/NGHf9nps+IMSAyeeSyv3qhtfcnKWA9sWownxUevRqEhsjnjL55w=="></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      lucide.createIcons();
+
+      const rhythmMap = {
+        quarter: { label: "四分音符", type: "quarter" },
+        eighth: { label: "兩個八分音符", type: "eighth" },
+        rest: { label: "四分休止符", type: "rest" }
+      };
+
+      // 音階對應表 (0 - 10)
+      const pitches = [
+        { name: "Do", label: "Do · C", top: 110.5, ledger: true },
+        { name: "Re", label: "Re · D", top: 96.5, ledger: false },
+        { name: "Mi", label: "Mi · E", top: 82.5, ledger: false },
+        { name: "Fa", label: "Fa · F", top: 68.5, ledger: false },
+        { name: "Sol", label: "Sol · G", top: 54.5, ledger: false },
+        { name: "La", label: "La · A", top: 40.5, ledger: false },
+        { name: "Si", label: "Si · B", top: 26.5, ledger: false },
+        { name: "Do2", label: "Do · C", top: 12.5, ledger: false },
+        { name: "Re2", label: "Re · D", top: -1.5, ledger: false },
+        { name: "Mi2", label: "Mi · E", top: -15.5, ledger: false },
+        { name: "Fa2", label: "Fa · F", top: -29.5, ledger: false }
+      ];
+
+      const cards = Array.from(document.querySelectorAll("[data-rhythm]"));
+      const zones = Array.from(document.querySelectorAll(".drop-zone"));
+      const clearButton = document.getElementById("clear-button");
+      let selectedRhythm = null;
+      let selectedIngredient = null; // 當前點擊選中的配料
+
+      // 配料拖曳與點擊初始化
+      const ingredientBadges = document.querySelectorAll(".ingredient-badge");
+      const wordSlots = document.querySelectorAll(".word-drop-slot");
+
+      ingredientBadges.forEach(badge => {
+        // 拖曳開始
+        badge.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", "ingredient:" + badge.dataset.word);
+          e.dataTransfer.effectAllowed = "move";
+          badge.classList.add("opacity-50");
+        });
+
+        badge.addEventListener("dragend", () => {
+          badge.classList.remove("opacity-50");
+        });
+
+        // 點選配料卡片
+        badge.addEventListener("click", () => {
+          ingredientBadges.forEach(b => b.classList.remove("ring-4", "ring-orange-500"));
+          if (selectedIngredient === badge.dataset.word) {
+            selectedIngredient = null;
+          } else {
+            selectedIngredient = badge.dataset.word;
+            badge.classList.add("ring-4", "ring-orange-500");
+          }
+        });
+      });
+
+      // 歌詞插槽目的地事件
+      wordSlots.forEach(slot => {
+        const input = slot.querySelector("input");
+
+        // 點選插槽直接填入已點選的配料（如果是點到input之外的區域，或者空點擊）
+        slot.addEventListener("click", (e) => {
+          if (e.target === input) return; // 讓 input 正常取得 focus 進行打字
+          if (selectedIngredient) {
+            input.value = selectedIngredient;
+            slot.className = "word-drop-slot bg-[#fdf5d6] border-2 border-solid border-[#e1aa33] font-bold text-xs text-[#4a341a]";
+            selectedIngredient = null;
+            ingredientBadges.forEach(b => b.classList.remove("ring-4", "ring-orange-500"));
+          } else if (!input.value) {
+            input.focus();
+          }
+        });
+
+        // 監聽 input 的輸入與變化，維持樣式同步
+        input.addEventListener("input", () => {
+          if (input.value.trim() !== "") {
+            slot.className = "word-drop-slot bg-[#fdf5d6] border-2 border-solid border-[#e1aa33] font-bold text-xs text-[#4a341a]";
+          } else {
+            slot.className = "word-drop-slot";
+          }
+        });
+
+        slot.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          slot.classList.add("drag-over");
+        });
+
+        slot.addEventListener("dragleave", () => {
+          slot.classList.remove("drag-over");
+        });
+
+        slot.addEventListener("drop", (e) => {
+          e.preventDefault();
+          slot.classList.remove("drag-over");
+          const data = e.dataTransfer.getData("text/plain");
+          if (data && data.startsWith("ingredient:")) {
+            const word = data.split(":")[1];
+            input.value = word;
+            slot.className = "word-drop-slot bg-[#fdf5d6] border-2 border-solid border-[#e1aa33] font-bold text-xs text-[#4a341a]";
+          }
+        });
+      });
+
+      function selectRhythm(rhythm) {
+        selectedRhythm = rhythm;
+        cards.forEach((card) => {
+          const isSelected = card.dataset.rhythm === rhythm;
+          card.classList.toggle("is-selected", isSelected);
+          card.setAttribute("aria-pressed", String(isSelected));
+        });
+      }
+
+      function applyPitch(note, pitchIndex) {
+        const p = pitches[pitchIndex];
+        note.dataset.pitchIndex = pitchIndex;
+        note.dataset.pitch = p.name;
+        note.style.setProperty("--head-top", p.top + "px");
+
+        // 超過第三線 (Si >= 6) 符桿朝下
+        const stemDown = pitchIndex >= 6;
+        note.classList.toggle("stem-down", stemDown);
+
+        // 控制 Do 下加線
+        note.classList.toggle("show-ledger-line", p.ledger);
+
+        const label = note.querySelector(".pitch-label");
+        if (label) label.textContent = p.label;
+      }
+
+      function createNote(rhythm) {
+        if (rhythm === "rest") {
+          const rest = document.createElement("span");
+          rest.className = "rest-mark";
+          rest.setAttribute("aria-hidden", "true");
+          rest.textContent = "𝄽";
+          return rest;
+        }
+
+        const note = document.createElement("div");
+        note.className = "staff-note";
+        note.tabIndex = 0;
+        note.setAttribute("role", "slider");
+        note.setAttribute("aria-valuemin", "0");
+        note.setAttribute("aria-valuemax", "10");
+
+        if (rhythm === "eighth") {
+          note.classList.add("eighth-pair");
+          note.innerHTML = '<span class="note-head"></span><span class="note-head note-head-two"></span><span class="note-stem"></span><span class="note-stem note-stem-two"></span><span class="note-beam"></span><span class="pitch-label"></span>';
+        } else {
+          note.innerHTML = '<span class="note-head"></span><span class="note-stem"></span><span class="pitch-label"></span>';
+        }
+
+        // 預設給 Mi (index 2)
+        applyPitch(note, 2);
+        note.setAttribute("aria-valuenow", "2");
+        note.setAttribute("aria-valuetext", "Mi，E，符桿朝上");
+        addPitchControls(note);
+        return note;
+      }
+
+      function updateAccessiblePitch(note) {
+        const index = parseInt(note.dataset.pitchIndex, 10);
+        const p = pitches[index];
+        note.setAttribute("aria-valuenow", String(index));
+        note.setAttribute("aria-valuetext", p.label + (index >= 6 ? "，符桿朝下" : "，符桿朝上"));
+      }
+
+      function addPitchControls(note) {
+        let dragging = false;
+        let startY = 0;
+        let initialIndex = 2;
+
+        note.addEventListener("pointerdown", (event) => {
+          dragging = true;
+          startY = event.clientY;
+          initialIndex = parseInt(note.dataset.pitchIndex, 10) || 2;
+          note.classList.add("dragging");
+          note.setPointerCapture(event.pointerId);
+          event.preventDefault();
+        });
+
+        note.addEventListener("pointermove", (event) => {
+          if (!dragging) return;
+          const deltaY = event.clientY - startY;
+          // 每 7px 行距切換一格音高。使用更精確的 Math.round 切換，提升拖曳至五線譜時的音高位置手感與準確度
+          const stepOffset = -Math.round(deltaY / 7);
+          let targetIndex = initialIndex + stepOffset;
+          if (targetIndex < 0) targetIndex = 0;
+          if (targetIndex > 10) targetIndex = 10;
+          
+          applyPitch(note, targetIndex);
+          updateAccessiblePitch(note);
+        });
+
+        function finishDrag() {
+          if (!dragging) return;
+          dragging = false;
+          note.classList.remove("dragging");
+        }
+
+        note.addEventListener("pointerup", finishDrag);
+        note.addEventListener("pointercancel", finishDrag);
+
+        note.addEventListener("keydown", (event) => {
+          if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+            event.preventDefault();
+            let index = parseInt(note.dataset.pitchIndex, 10) || 2;
+            index = event.key === "ArrowUp" ? index + 1 : index - 1;
+            if (index < 0) index = 0;
+            if (index > 10) index = 10;
+            applyPitch(note, index);
+            updateAccessiblePitch(note);
+          }
+        });
+      }
+
+      function placeRhythm(zone, rhythm) {
+        const rhythmData = rhythmMap[rhythm];
+        if (!rhythmData) return;
+
+      zone.replaceChildren();
+      zone.appendChild(createNote(rhythm));
+
+        zone.classList.add("has-rhythm");
+        zone.setAttribute("aria-label", zone.dataset.row + "，" + zone.dataset.beatLabel + "，已放入" + rhythmData.label + "。");
+      }
+
+      cards.forEach((card) => {
+        card.addEventListener("click", () => selectRhythm(card.dataset.rhythm));
+
+        card.addEventListener("dragstart", (event) => {
+          selectRhythm(card.dataset.rhythm);
+          event.dataTransfer.effectAllowed = "copy";
+          event.dataTransfer.setData("text/plain", card.dataset.rhythm);
+        });
+      });
+
+      zones.forEach((zone) => {
+        zone.addEventListener("click", (event) => {
+          if (event.target.closest(".staff-note")) return;
+          if (!selectedRhythm) {
+            return;
+          }
+          placeRhythm(zone, selectedRhythm);
+        });
+
+        zone.addEventListener("dragover", (event) => {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "copy";
+          zone.classList.add("drag-over");
+        });
+
+        zone.addEventListener("dragleave", () => zone.classList.remove("drag-over"));
+
+        zone.addEventListener("drop", (event) => {
+          const dragData = event.dataTransfer.getData("text/plain");
+          if (dragData && dragData.startsWith("ingredient:")) return; // 避免把配料拖到五線譜
+          event.preventDefault();
+          zone.classList.remove("drag-over");
+          if (rhythmMap[dragData]) {
+            selectRhythm(dragData);
+            placeRhythm(zone, dragData);
+          }
+        });
+      });
+
+      clearButton.addEventListener("click", () => {
+        // 清除節奏
+        zones.forEach((zone) => {
+          zone.replaceChildren();
+          zone.classList.remove("has-rhythm", "drag-over");
+          zone.setAttribute("aria-label", zone.dataset.row + "，" + zone.dataset.beatLabel + "，選擇或拖曳節奏卡到這裡");
+        });
+
+        // 重置配料歌詞填寫插槽
+        wordSlots.forEach(slot => {
+          const input = slot.querySelector("input");
+          if (input) input.value = "";
+          slot.className = "word-drop-slot";
+        });
+
+        selectedRhythm = null;
+        selectedIngredient = null;
+        ingredientBadges.forEach(b => b.classList.remove("ring-4", "ring-orange-500"));
+        cards.forEach((card) => {
+          card.classList.remove("is-selected");
+          card.setAttribute("aria-pressed", "false");
+        });
+      });
+    });
+  </script>
+ </body>
+</html>
